@@ -40,7 +40,7 @@ def send_file(file_path):
                 break
 
 
-folder_path = "./jsons"
+folder_path = "./output"
 
 for file_name in os.listdir(folder_path):
     file_path = os.path.join(folder_path, file_name)
