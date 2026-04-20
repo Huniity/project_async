@@ -1,8 +1,10 @@
-# src/cli.py -- Veja lá qual'é o melhor jeito de organizar isso aqui, talvez seja melhor colocar em src/cli/main.py ou algo assim. 
-# De qualquer forma, esse arquivo é o ponto de entrada para a CLI do projeto, usando Typer para facilitar a criação de comandos e opções. 
-# Ele importa a função process_files do módulo worker, que é onde a lógica de processamento dos arquivos CSV para JSON deve estar implementada. 
-# O comando convert é definido para aceitar um diretório de entrada, um diretório de saída, o número de trabalhadores paralelos 
-# e o tamanho do chunk para processamento. O main() é a função que inicia a aplicação Typer.
+# cli.py
+# -------
+# Handles user-facing input via the terminal and delegates
+# all processing to the worker module (owned by teammates).
+# Interface contract:
+#   process_files(files: list[Path], output_dir: Path, workers: int, chunk_size: int)
+
 import typer
 from pathlib import Path
 
@@ -16,7 +18,9 @@ def convert(
     chunk_size: int = typer.Option(10_000, "--chunk-size", "-c", help="Rows per processing chunk."),
 ):
     """Convert all CSV files in INPUT_DIR to JSON files in OUTPUT_DIR."""
-    from csv_pipeline.worker import process_files  # your teammate's code
+    # Imported here to keep cli.py decoupled from implementation details.
+    # Requires worker module to be available at runtime, not at import time.
+    from csv_pipeline.worker import process_files
 
     output_dir.mkdir(parents=True, exist_ok=True)
     csv_files = list(input_dir.glob("*.csv"))
