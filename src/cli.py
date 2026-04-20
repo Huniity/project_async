@@ -1,4 +1,8 @@
-# src/cli.py -- Veja lá qual'é o melhor jeito de organizar isso aqui, talvez seja melhor colocar em src/cli/main.py ou algo assim. De qualquer forma, esse arquivo é o ponto de entrada para a CLI do projeto, usando Typer para facilitar a criação de comandos e opções. Ele importa a função process_files do módulo worker, que é onde a lógica de processamento dos arquivos CSV para JSON deve estar implementada. O comando convert é definido para aceitar um diretório de entrada, um diretório de saída, o número de trabalhadores paralelos e o tamanho do chunk para processamento. O main() é a função que inicia a aplicação Typer.
+# src/cli.py -- Veja lá qual'é o melhor jeito de organizar isso aqui, talvez seja melhor colocar em src/cli/main.py ou algo assim. 
+# De qualquer forma, esse arquivo é o ponto de entrada para a CLI do projeto, usando Typer para facilitar a criação de comandos e opções. 
+# Ele importa a função process_files do módulo worker, que é onde a lógica de processamento dos arquivos CSV para JSON deve estar implementada. 
+# O comando convert é definido para aceitar um diretório de entrada, um diretório de saída, o número de trabalhadores paralelos 
+# e o tamanho do chunk para processamento. O main() é a função que inicia a aplicação Typer.
 import typer
 from pathlib import Path
 
