@@ -1,7 +1,20 @@
 [project]
 name = "csv-converter"
 version = "0.1.0"
-description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+
+# Only list dependencies relevant to the CLI layer.
+# Parsing, concurrency, and serialisation dependencies
+# are the responsibility of the worker module's owner.
+dependencies = [
+    "typer>=0.12",
+]
+
+[project.scripts]
+# This registers the CLI command installed into the environment.
+# Running `csv-pipeline` in the terminal calls cli.py -> main() -> app().
+csv-pipeline = "csv_pipeline.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
