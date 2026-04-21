@@ -5,20 +5,24 @@ import math
 import uuid
 import time
 
-API_URL = "http://127.0.0.1:8000/json"
-CHUNK_SIZE = 10 * 1024 * 1024  # 10MB chunks
+CHUNK_SIZE = 10 * 1024 * 1024  # 10MB
 
 
-def send_file(file_path, timeout=30):
+def send_file(file_path, api_url, timeout=30):
     """Send file to API in chunks with base64 encoding."""
     start_time = time.time()
+
     file_size = os.path.getsize(file_path)
     total_chunks = math.ceil(file_size / CHUNK_SIZE)
+
     file_id = str(uuid.uuid4())
     file_name = os.path.basename(file_path)
-    
-    print(f"Sending: {file_name} ({file_size / 1024 / 1024:.2f}MB) → {total_chunks} chunks")
-    
+
+    print(
+        f"Sending: {file_name} "
+        f"({file_size / 1024 / 1024:.2f}MB) → {total_chunks} chunks"
+    )
+
     successful_chunks = 0
     failed_chunks = 0
 
@@ -38,11 +42,11 @@ def send_file(file_path, timeout=30):
                 }
 
                 try:
-                    r = requests.post(API_URL, json=payload, timeout=timeout)
+                    r = requests.post(api_url, json=payload, timeout=timeout)
 
                     if r.status_code == 200:
                         successful_chunks += 1
-                        # Progress indicator every 10 chunks
+
                         if chunk_number % 10 == 0 or chunk_number == total_chunks:
                             print(f"  → Chunk {chunk_number}/{total_chunks}")
                     else:
@@ -56,24 +60,27 @@ def send_file(file_path, timeout=30):
                     break
 
         elapsed = time.time() - start_time
-        
+
         if successful_chunks == total_chunks:
             speed = (file_size / 1024 / 1024) / elapsed
-            print(f"✓ {file_name}: {successful_chunks}/{total_chunks} chunks ({elapsed:.1f}s, {speed:.1f}MB/s)\n")
+            print(
+                f"✓ {file_name}: {successful_chunks}/{total_chunks} chunks "
+                f"({elapsed:.1f}s, {speed:.1f}MB/s)\n"
+            )
             return True
         else:
-            print(f"✗ {file_name}: Failed - only {successful_chunks}/{total_chunks} chunks sent\n")
+            print(
+                f"✗ {file_name}: Failed - only "
+                f"{successful_chunks}/{total_chunks} chunks sent\n"
+            )
             return False
-            
+
     except Exception as e:
         print(f"✗ Error processing {file_name}: {e}\n")
         return False
 
 
-def run(output_dir: str = "./output", api_url: str = API_URL):
-    global API_URL
-    API_URL = api_url
-
+def run(output_dir: str = "./output", api_url: str = "http://127.0.0.1:8000/json"):
     start_all = time.time()
 
     if not os.path.exists(output_dir):
@@ -93,14 +100,19 @@ def run(output_dir: str = "./output", api_url: str = API_URL):
 
     for file_name in json_files:
         file_path = os.path.join(output_dir, file_name)
+
         if os.path.isfile(file_path):
-            if send_file(file_path):
+            if send_file(file_path, api_url):
                 successful_files += 1
             else:
                 failed_files += 1
 
     total_elapsed = time.time() - start_all
-    print(f"Completed: {successful_files} succeeded, {failed_files} failed ({total_elapsed:.1f}s total)")
+
+    print(
+        f"Completed: {successful_files} succeeded, "
+        f"{failed_files} failed ({total_elapsed:.1f}s total)"
+    )
 
 
 if __name__ == "__main__":

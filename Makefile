@@ -12,10 +12,10 @@ down:
 
 
 convert:
-	docker compose run csv_converter uv run python cli.py convert /workspace/input /workspace/output
+	docker compose run csv_converter uv run python cli.py convert /workspace/input /workspace/output --workers 8
 	chmod -R 777 output 2>/dev/null || true
 	@echo "✓ CSVs converted to JSON in Docker container"
 
 send:
-	docker compose run csv_converter uv run python cli.py send /workspace/output
+	docker compose run csv_converter uv run python cli.py send /workspace/output --api-url http://api:8000/json
 	@echo "✓ JSON files sent to API in Docker container"
