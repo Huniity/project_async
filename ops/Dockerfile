@@ -6,7 +6,7 @@ COPY . /workspace
 
 WORKDIR /workspace
 
-RUN uv sync
+RUN UV_PROJECT_ENVIRONMENT=/opt/venv uv sync
 
 # Create directories
 RUN mkdir -p /workspace/input /workspace/output
