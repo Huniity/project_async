@@ -2,10 +2,14 @@ FROM python:3.14-slim
 
 RUN pip install uv
 
-COPY . .
+COPY . /workspace
 
-WORKDIR /app/
+WORKDIR /workspace
 
 RUN uv sync
 
-CMD ["uv", "run", "main.py"]
+# Create directories
+RUN mkdir -p /workspace/input /workspace/output
+
+# Default: bash shell for running commands
+CMD ["/bin/bash"]
