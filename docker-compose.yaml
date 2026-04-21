@@ -1,0 +1,15 @@
+services:
+  csv_converter:
+    build:
+      context: .
+      dockerfile: ./ops/Dockerfile
+    volumes:
+      - .:/workspace
+    environment:
+      - API_URL=http://127.0.0.1:8000/json
+    deploy:
+      resources:
+        limits:
+          cpus: '16.0'
+          memory: 16G
+
