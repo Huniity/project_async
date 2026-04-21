@@ -1,218 +1,127 @@
 # CSV Pipeline
 
-Convert large CSV files to JSON and send them to an API in chunked batches.
+CSV to JSON pipeline for large datasets, with chunked conversion and chunked upload to an HTTP API.
+
+## What This Project Does
+
+1. Generates mock CSV files (optional).
+2. Converts CSV files to JSON Lines output.
+3. Uploads JSON files to an API in fixed-size chunks.
+
+The pipeline is designed to be memory-efficient during conversion and robust for large-file uploads.
 
 ## Features
 
-- **Chunked CSV Reading**: Processes large CSV files efficiently (10K row chunks)
-- **JSONL Output**: Converts to JSON Lines format (one JSON object per line)
-- **Chunked API Upload**: Sends JSON files to API in 10MB chunks with base64 encoding
-- **Mock API Server**: Built-in mock API server for testing
-- **Docker Support**: Fully containerized workflow
-- **CLI Interface**: Simple command-line interface for all operations
-
-## Quick Start
-
-### Local Development
-
-1. **Install dependencies**:
-```bash
-uv sync
-```
-
-2. **Generate sample CSV files** (5 files × 5M rows each):
-```bash
-uv run python ops/script/create_mock_csv.py --output-dir input --files 5 --rows 5000000
-```
-
-3. **Convert CSVs to JSON**:
-```bash
-uv run python cli.py convert input output
-```
-
-4. **Start mock API server** (in separate terminal):
-```bash
-python mock_api.py
-```
-
-5. **Send JSON files to API**:
-```bash
-uv run python cli.py send output
-```
-
-### Using Makefile (Recommended)
-
-```bash
-# Generate CSVs with Docker
-make up
-
-# Convert CSVs to JSON
-make convert
-
-# Start mock API in separate terminal
-make mock-api
-
-# Send to API
-make send
-
-# Check API status
-make api-status
-
-# Stop containers and clean up
-make down
-```
+- Chunked CSV reading with pandas (`10_000` rows per chunk).
+- JSON Lines output (one JSON object per line).
+- Chunked HTTP upload (`10 MB` per request chunk).
+- CLI commands powered by Typer.
+- Docker workflow using `docker compose` + `Makefile`.
+- Parallel CSV conversion using multiprocessing.
 
 ## Project Structure
 
 ```
-├── conversion.py          # CSV → JSON conversion logic
-├── app/
-│   └── envio.py          # API upload logic
-├── src/
-│   └── cli.py            # CLI interface
+.
+├── cli.py                         # Typer CLI entrypoint
+├── docker-compose.yaml            # Docker service definition
+├── Makefile                       # Common pipeline commands
+├── pyproject.toml                 # Python project metadata/deps
 ├── ops/
-│   ├── Dockerfile        # Container image
+│   ├── Dockerfile                 # Runtime image for pipeline commands
 │   └── script/
-│       └── create_mock_csv.py  # CSV generator script
-├── input/                # CSV input directory (generated)
-├── output/               # JSON output directory (generated)
-├── mock_api_output/      # Mock API received files (generated)
-├── docker-compose.yaml   # Container orchestration
-└── Makefile             # Task automation
+│       └── create_mock_csv.py     # Synthetic CSV generator
+├── src/
+│   └── app/
+│       ├── conversion.py          # CSV -> JSON conversion logic
+│       └── envio.py               # JSON upload logic
+├── input/                         # Generated/input CSV files
+└── output/                        # Generated JSON files
 ```
 
-## Pipeline Workflow
+## Requirements
 
-```
-Input CSVs (input/)
-    ↓
-conversion.py (chunked reading: 10K rows)
-    ↓
-JSON Lines output (output/)
-    ↓
-app/envio.py (chunked upload: 10MB chunks)
-    ↓
-Mock API or Real API (http://127.0.0.1:8000/json)
-    ↓
-Reconstructed files (mock_api_output/)
-```
+- Python `>= 3.14`
+- `uv`
+- Docker + Docker Compose (for containerized workflow)
 
-## Commands
+## Quick Start
 
-### Local Commands
-
-| Command | Purpose |
-|---------|---------|
-| `uv sync` | Install dependencies |
-| `python conversion.py [input] [output]` | Convert CSVs to JSON |
-| `python app/envio.py` | Send JSON files to API |
-| `python mock_api.py` | Start mock API server |
-| `uv run python cli.py convert input output` | CLI convert command |
-| `uv run python cli.py send output` | CLI send command |
-
-### Makefile Commands
-
-| Command | Purpose |
-|---------|---------|
-| `make up` | Generate sample CSVs in Docker |
-| `make convert` | Convert CSVs to JSON in Docker |
-| `make send` | Send JSON to API in Docker |
-| `make mock-api` | Start mock API server |
-| `make api-status` | Check mock API status |
-| `make api-health` | Check mock API health |
-| `make down` | Stop Docker containers and clean up |
-
-## Configuration
-
-### CSV Generation
-- **Location**: `ops/script/create_mock_csv.py`
-- **Default**: 5 files × 5M rows each
-- **Columns**: auto-generated with various data types
-
-### Conversion Settings
-- **Chunk Size**: 10,000 rows per chunk (configurable in `conversion.py`)
-- **Output Format**: JSON Lines (one JSON object per line)
-
-### API Upload Settings
-- **Chunk Size**: 10MB per chunk (configurable in `app/envio.py`)
-- **Encoding**: Base64
-- **Default URL**: `http://127.0.0.1:8000/json`
-
-## Docker Usage
-
-The project includes full Docker support via `docker-compose.yaml`:
+### Docker/Makefile workflow (recommended)
 
 ```bash
-# Build and generate CSVs
-docker compose run csv_converter uv run python ops/script/create_mock_csv.py --output-dir /workspace/input --files 5 --rows 5000000
+# Build image and generate sample CSV files in input/
+make up
 
-# Convert CSVs to JSON
-docker compose run csv_converter uv run python cli.py convert /workspace/input /workspace/output
+# Convert CSV -> JSON into output/
+make convert
 
-# Send to API
-docker compose run csv_converter uv run python cli.py send /workspace/output
+# Send JSON files to API
+make send
+
+# Stop containers and clean generated folders
+make down
 ```
 
-## Performance
+## CLI Usage
 
-Expected performance on 1.6GB input (5 × 320MB CSV files):
-- **Conversion**: ~70 seconds → 2.7GB JSON output
-- **Upload**: ~33 seconds (272 chunks to mock API)
+### Install dependencies
 
-## Mock API Endpoints
-
-### POST /json
-Receive chunked JSON data.
-
-**Request**:
-```json
-{
-  "file_id": "uuid-string",
-  "file_name": "data_1.json",
-  "chunk_number": 1,
-  "total_chunks": 50,
-  "data": "base64-encoded-chunk"
-}
+```bash
+uv sync
 ```
 
-**Response** (in progress):
-```json
-{
-  "status": "in_progress",
-  "message": "Chunk 1/50 received",
-  "chunks_received": 1,
-  "total_chunks": 50
-}
+### Convert CSV files
+
+```bash
+uv run python cli.py convert input output --workers 4
 ```
 
-**Response** (complete):
-```json
-{
-  "status": "success",
-  "message": "File completely received and reconstructed",
-  "file_name": "data_1.json",
-  "total_chunks": 50,
-  "file_size_mb": 550.25
-}
+### Send JSON files to API
+
+```bash
+uv run python cli.py send output --api-url http://127.0.0.1:8000/json
 ```
 
-### GET /health
-Health check endpoint.
+## Makefile Commands
 
-### GET /status
-View received files and their status.
+| Command | Description |
+|---------|-------------|
+| `make up` | Build container and generate mock CSVs in `input/` |
+| `make convert` | Convert CSV files from `input/` to JSON in `output/` |
+| `make send` | Upload JSON files from `output/` to API |
+| `make down` | Stop containers and remove generated `input/` and `output/` |
 
-### GET /
-API information and endpoints.
+## Data Flow
+
+```
+input/*.csv
+   -> src/app/conversion.py
+   -> output/*.json (JSON Lines)
+   -> src/app/envio.py
+   -> POST chunks to API endpoint
+```
+
+## Configuration Details
+
+- CSV generation script: `ops/script/create_mock_csv.py`
+  - Defaults: 5 files, 5,000,000 rows each, seed 42.
+- Conversion chunk size: `10_000` rows (`src/app/conversion.py`).
+- Upload chunk size: `10 * 1024 * 1024` bytes (`src/app/envio.py`).
+- Default upload URL: `http://127.0.0.1:8000/json`.
+
+## Docker Note
+
+The container uses `UV_PROJECT_ENVIRONMENT=/opt/venv` during image build so Docker does not overwrite the host `.venv` when `/workspace` is mounted.
 
 ## Dependencies
 
-- `python >= 3.14`
-- `pandas >= 3.0.2` - CSV processing
-- `requests >= 2.33.1` - HTTP requests
-- `typer >= 0.12` - CLI interface
-- `uv` - Package manager
+- `pandas`
+- `requests`
+- `typer`
+
+See `pyproject.toml` for exact versions.
 
 ## License
 
-See [LICENSE](LICENSE) file.
+See `LICENSE`.

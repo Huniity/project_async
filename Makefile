@@ -19,3 +19,5 @@ convert:
 send:
 	docker compose run csv_converter uv run python cli.py send /workspace/output --api-url http://api:8000/json
 	@echo "✓ JSON files sent to API in Docker container"
+
+#https://b52640e2-0da2-4881-8852-c00f083b4790.mock.pstmn.io
